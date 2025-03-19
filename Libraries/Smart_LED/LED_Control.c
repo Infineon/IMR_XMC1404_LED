@@ -30,7 +30,8 @@
  * agrees to indemnify Cypress against all liability.
 ******************************************************************************/
 
-#include "LED_Control.h"
+#include "../Smart_LED/LED_Control.h"
+
 #include "cycfg_peripherals.h"
 #include <stdint.h>
 
@@ -43,7 +44,9 @@ uint8_t CAN_GREEN;
 uint8_t CAN_BLUE;
 
 uint16_t pulse_timing = PULSING_TIME_TO_BRIGHTEST;	// timing for pulse
-uint32_t led_bitmask = 0;	// Bitmask for individual LED control (works for PULSE and STEADY): 1: LED off, 0: LED on
+uint32_t led_bitmask = 0;	// Bitmask for individual LED control
+							// (works for PULSE and STEADY):
+							// 1: LED off, 0: LED on
 uint32_t ignore = 0;
 
 uint8_t temp_pulsing_red = 0;
@@ -74,10 +77,14 @@ void setLEDcolor(uint16_t i, uint8_t red, uint8_t green, uint8_t blue) {
  * Description:   limits the minimum Output level of the LEDs.
  ******************************************************************************/
 void limitLEDoutput(void) {
-	for (uint16_t i = 0; i < LED_Count; i++) {			// Limit LED Output according to Thresholds
-		if (strip.leds[i].blue <= BLUE_MIN_THRESHOLD) strip.leds[i].blue = 0;
-		if (strip.leds[i].red <= RED_MIN_THRESHOLD) strip.leds[i].red = 0;
-		if (strip.leds[i].green <= GREEN_MIN_THRESHOLD) strip.leds[i].green = 0;
+	// Limit LED Output according to Thresholds
+	for (uint16_t i = 0; i < LED_Count; i++) {
+		if (strip.leds[i].blue <= BLUE_MIN_THRESHOLD)
+			strip.leds[i].blue = 0;
+		if (strip.leds[i].red <= RED_MIN_THRESHOLD)
+			strip.leds[i].red = 0;
+		if (strip.leds[i].green <= GREEN_MIN_THRESHOLD)
+			strip.leds[i].green = 0;
 	}
 }
 
@@ -90,10 +97,16 @@ void limitLEDoutput(void) {
  * Description:   scales the brightness of the LEDs.
  ******************************************************************************/
 void scaleLEDbrightness(void) {
-	for (uint16_t i = 0; i < LED_Count; i++) {			// Scale LED Brightness
-		strip.leds[i].blue 	= strip.leds[i].blue  * LED_BRIGHTNESS_MULTIPLIER / LED_BRIGHTNESS_DIVIDER;  // Detzel: the constants are ints, so this line has no effect (muliply with 1)?
-		strip.leds[i].red 	= strip.leds[i].red   * LED_BRIGHTNESS_MULTIPLIER / LED_BRIGHTNESS_DIVIDER;
-		strip.leds[i].green = strip.leds[i].green * LED_BRIGHTNESS_MULTIPLIER / LED_BRIGHTNESS_DIVIDER;
+	// Scale LED Brightness
+	for (uint16_t i = 0; i < LED_Count; i++) {
+		// Detzel: the constants are integers
+		// , so this line has no effect (multiply with 1)?
+		strip.leds[i].blue 	= strip.leds[i].blue  *
+				LED_BRIGHTNESS_MULTIPLIER / LED_BRIGHTNESS_DIVIDER;
+		strip.leds[i].red 	= strip.leds[i].red   *
+				LED_BRIGHTNESS_MULTIPLIER / LED_BRIGHTNESS_DIVIDER;
+		strip.leds[i].green = strip.leds[i].green *
+				LED_BRIGHTNESS_MULTIPLIER / LED_BRIGHTNESS_DIVIDER;
 	}
 }
 
@@ -133,7 +146,9 @@ uint8_t FadingChaserLight(uint16_t uC_time) {
 }
 
 void LEDOn(uint32_t i, int scaling) {
-	setLEDcolor(i, (uint8_t)(CAN_RED / scaling), (uint8_t)(CAN_GREEN / scaling), (uint8_t)(CAN_BLUE / scaling));
+	setLEDcolor(i, 	(uint8_t)(CAN_RED / scaling),
+					(uint8_t)(CAN_GREEN / scaling),
+					(uint8_t)(CAN_BLUE / scaling));
 }
 
 void LEDOff(uint32_t i) {
@@ -150,13 +165,22 @@ void LEDOff(uint32_t i) {
  ******************************************************************************/
 uint8_t PulsingLight(uint16_t uC_time, uint16_t time_to_brightest) {
 
-	for (uint16_t i = 0; i < LED_Count; i++) {			// Scale LED Brightness
+	// Scale LED Brightness
+	for (uint16_t i = 0; i < LED_Count; i++) {
 		if ((~led_bitmask & 1<<i))
 		{
 			if (uC_time <= time_to_brightest)
-				setLEDcolor(i, CAN_RED * ((float) uC_time / time_to_brightest), CAN_GREEN * ((float) uC_time / time_to_brightest), CAN_BLUE * ((float) uC_time / time_to_brightest));
+				setLEDcolor(i, CAN_RED * ((float)uC_time / time_to_brightest),
+					CAN_GREEN * ((float)uC_time / time_to_brightest),
+					CAN_BLUE * ((float)uC_time / time_to_brightest));
 			else
-				setLEDcolor(i, CAN_RED * ((float) ((time_to_brightest * 2) - uC_time) / time_to_brightest), CAN_GREEN * ((float) ((time_to_brightest * 2) - uC_time) / time_to_brightest), CAN_BLUE * ((float) ((time_to_brightest * 2) - uC_time) / time_to_brightest));
+				setLEDcolor(i,
+					CAN_RED * ((float)((time_to_brightest * 2) - uC_time) /
+								time_to_brightest),
+					CAN_GREEN * ((float)((time_to_brightest * 2) - uC_time) /
+								time_to_brightest),
+					CAN_BLUE * ((float)((time_to_brightest * 2) - uC_time) /
+								time_to_brightest));
 		}else{
 			setLEDcolor(i, 0, 0, 0);
 		}
@@ -183,15 +207,12 @@ void SteadyLight(void) {
 
 /*******************************************************************************
  * Function:      OffLight
- * Author:        [Your Name]
- *
- * Creation:      [Creation Date]
- * Last Modified: [Last Modified Date]
  * Description:   Turns off all LEDs by setting their color values to zero.
  ******************************************************************************/
 void OffLight(void)
 {
-    for (uint16_t i = 0; i < LED_Count; i++) {			// Set all LEDs to Zero
+	// Set all LEDs to Zero
+    for (uint16_t i = 0; i < LED_Count; i++) {
         strip.leds[i].blue = 0;
         strip.leds[i].red = 0;
         strip.leds[i].green = 0;
@@ -241,7 +262,8 @@ void SetTimingFromCAN(uint8_t CAN_timing){
  * Author:        Samuel Detzel
  * Creation:      2025-02-19
  * Last Modified: 2025-02-19, Samuel Detzel
- * Description:   Sets the bitmask for individual LED control based on CAN data.
+ * Description:   Sets the bitmask for individual LED control
+ * 				  based on CAN data.
  ******************************************************************************/
 void SetBitmaskFromCAN(uint32_t bitmask)
 {

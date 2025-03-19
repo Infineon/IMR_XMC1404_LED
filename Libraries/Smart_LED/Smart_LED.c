@@ -30,43 +30,88 @@
  * agrees to indemnify Cypress against all liability.
 ******************************************************************************/
 
-#ifndef LED_CONTROL_H
-#define LED_CONTROL_H
+#include "../Smart_LED/Smart_LED.h"
 
-#include "cybsp.h"
-#include <stdint.h>
-#include <stdlib.h>
+const uint16_t bit_1 = 0x33;
+const uint16_t bit_0 = 0x1a;
 
-#include "WS2812b.h"
+void InitRGB(STRIP_t* strip, XMC_GPIO_PORT_t* port, uint8_t pin, uint8_t size)
+{
+	strip->port = port;
+	strip->pin = pin;
+	strip->size = size;
+	strip->leds = malloc(sizeof(RGB_t) * size);
 
-#define LED_BRIGHTNESS_MULTIPLIER 		10
-#define LED_BRIGHTNESS_DIVIDER 			12
+	XMC_GPIO_CONFIG_t config =
+	{
+		.mode = XMC_GPIO_MODE_OUTPUT_PUSH_PULL,
+		.output_level = XMC_GPIO_OUTPUT_LEVEL_LOW,
+	};
+	XMC_GPIO_Init(strip->port, strip->pin, &config);
 
-#define RED_MIN_THRESHOLD				0
-#define GREEN_MIN_THRESHOLD				3
-#define BLUE_MIN_THRESHOLD				0
+	for (uint8_t i=0; i<size; i++)
+	{
+		strip->leds[i].red = 0;
+		strip->leds[i].green = 0;
+		strip->leds[i].blue = 0;
+	}
+}
 
-#define PULSING_TIME_TO_BRIGHTEST		128
+void SendRGB(STRIP_t* strip)
+{
+	//clear output
+	strip->port->OMR = 0x10000U << strip->pin;
 
-extern STRIP_t 	strip;
-extern uint16_t LED_Count;
-extern uint16_t Chaser_Pos;
-
-void limitLEDoutput(void);
-void scaleLEDbrightness(void);
-void setLEDcolor(uint16_t i, uint8_t red, uint8_t green, uint8_t blue);
-void LEDOn(uint32_t i, int scaling);
-void LEDOff(uint32_t i);
-
-
-void InitChaser(void);
-uint8_t FadingChaserLight(uint16_t uC_time);
-uint8_t PulsingLight(uint16_t uC_time, uint16_t time_to_brightest);
-void SteadyLight(void);
-void OffLight(void);
-
-void SetColorsFromCAN(uint8_t CAN_data[3]);
-void SetTimingFromCAN(uint8_t CAN_timing);
-void SetBitmaskFromCAN(uint32_t bitmask);
-
-#endif /* LED_CONTROL_H */
+	for (int i = 0; i < strip->size; i++)
+	{
+		for (int8_t j=23; j>=0; j--)
+		{
+			if (*((uint32_t*)&strip->leds[i]) & (1<<j))
+			{
+				// send one
+				strip->port->OMR = (uint32_t)0x1U << strip->pin;
+				__ASM (
+						" NOP\n\t"
+						" NOP\n\t"
+						" NOP\n\t"
+						" NOP\n\t"
+						" NOP\n\t"
+						" NOP\n\t"
+						" NOP\n\t"
+						" NOP\n\t"
+						" NOP\n\t"
+						" NOP\n\t"
+						" NOP\n\t"
+						" NOP\n\t"
+						" NOP\n\t"
+						" NOP\n\t"
+						" NOP\n\t"
+					);
+				strip->port->OMR = 0x10000U << strip->pin; \
+			}
+			else
+			{
+				// send zero
+				strip->port->OMR = (uint32_t)0x1U << strip->pin; \
+				__ASM (" NOP\n\t");
+				strip->port->OMR = 0x10000U << strip->pin;  \
+				__ASM (
+						" NOP\n\t"
+						" NOP\n\t"
+						" NOP\n\t"
+						" NOP\n\t"
+						" NOP\n\t"
+						" NOP\n\t"
+						" NOP\n\t"
+						" NOP\n\t"
+						" NOP\n\t"
+						" NOP\n\t"
+						" NOP\n\t"
+						" NOP\n\t"
+						" NOP\n\t"
+						" NOP\n\t"
+				);
+			}
+		}
+	}
+}

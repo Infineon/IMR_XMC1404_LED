@@ -31,33 +31,39 @@
 ******************************************************************************/
 
 #include "IMR_CAN.h"
-#include "LED_Control.h"
 #include "IMR_CAN_GLOBAL.h"
 #include <stdint.h>
+#include "../Smart_LED/LED_Control.h"
 
 uint16_t TimeStampLED = 0;
 IMR_CAN_SENSOR_LED_COMMANDS_t current_mode = LED_MODE_OFF;
 uint8_t CAN_DATA[8] = {0};
 
-/***************************************************************************************************************/
-
+/*****************************************************************************
+ * Handler for LED command message to a particular LED board ID
+ *****************************************************************************/
 void CAN_IRQ_RX_MESSAGE_HANDLER(void) {
-	XMC_CAN_MO_Receive(&CAN_NODE_RECEIVE_LMO_NAME);			// Receive data from CAN Node and transfer into CAN data structure
+	// Receive data from CAN Node and transfer into CAN data structure
+	XMC_CAN_MO_Receive(&CAN_NODE_RECEIVE_LMO_NAME);
 
-	uint32_t id = XMC_CAN_MO_GetIdentifier(&CAN_NODE_RECEIVE_LMO_NAME);
+	//uint32_t id = XMC_CAN_MO_GetIdentifier(&CAN_NODE_RECEIVE_LMO_NAME);
 	uint8_t *data = CAN_NODE_RECEIVE_LMO_NAME.can_data_byte;
 
-		//Non optimal solution: Storing data in global object to make accessible in main
+	// Non optimal solution:
+	// Storing data in global object to make accessible in main
 	for (int i = 0; i < 8; i++) {
 		CAN_DATA[i] = data[i];
 	}
 	CAN_process_data(data);
 }
 
+/*****************************************************************************
+ * Handler for LED command message to all LED boards in IMR
+ *****************************************************************************/
 void CAN_IRQ_RX_ALL_MESSAGE_HANDLER() {
 	XMC_CAN_MO_Receive(&CAN_NODE_RECEIVE_ALL_LMO_NAME);
 
-	uint32_t id = XMC_CAN_MO_GetIdentifier(&CAN_NODE_RECEIVE_ALL_LMO_NAME);
+	//uint32_t id = XMC_CAN_MO_GetIdentifier(&CAN_NODE_RECEIVE_ALL_LMO_NAME);
 	uint8_t *data = CAN_NODE_RECEIVE_ALL_LMO_NAME.can_data_byte;
 
 	for (int i = 0; i < 8; i++) {
@@ -66,24 +72,37 @@ void CAN_IRQ_RX_ALL_MESSAGE_HANDLER() {
 	CAN_process_data(data);
 }
 
+/*****************************************************************************
+ * CAN_process_data
+ * Processing the CAN data received: the first byte is the LED mode/effect
+ * and the next bytes are the more detailed actions for the LED to perform
+ *****************************************************************************/
 void CAN_process_data(uint8_t *data) {
 	SetColorsFromCAN(&data[1]);
-	SetTimingFromCAN(data[4]);		// used only for some modes (e.g. pulse, chaser)
+	// used only for some modes (e.g. pulse, chaser)
+	SetTimingFromCAN(data[4]);
 
-	uint32_t bitmask = (((uint32_t)data[5] << 16) | ((uint32_t)data[6] << 8) | ((uint32_t)data[7]));
+	uint32_t bitmask = (((uint32_t)data[5] << 16) |
+			((uint32_t)data[6] << 8) | ((uint32_t)data[7]));
 	uint32_t msb = (bitmask >> 23) << 31;
-	//Calculate bitmask depending on board
 
-	if ((board_id % 8 == 0 || board_id % 8 == 4) && XMC_GPIO_GetInput(CAN_ID6_PORT, CAN_ID6_PIN)) { //short board
-			SetBitmaskFromCAN((bitmask >> 1) | ((uint32_t) 0x7fffffe0) | msb);
+	// Calculate bitmask depending on board
+	if ((board_id % 8 == 0 || board_id % 8 == 4) &&
+			XMC_GPIO_GetInput(CAN_ID6_PORT, CAN_ID6_PIN))
+	{ // short board
+		SetBitmaskFromCAN((bitmask >> 1) | ((uint32_t) 0x7fffffe0) | msb);
 	}
-	else if (board_id % 8 == 0 || board_id % 8 == 4 || board_id % 8 == 3 || board_id % 8 == 7){
-			SetBitmaskFromCAN(bitmask | msb);
+	else if (board_id % 8 == 0 || board_id % 8 == 4 ||
+			board_id % 8 == 3 || board_id % 8 == 7)
+	{
+		SetBitmaskFromCAN(bitmask | msb);
 	}
-	else if (board_id % 8 == 1 || board_id % 8 == 5) { //middle board front/back
+	else if (board_id % 8 == 1 || board_id % 8 == 5)
+	{ // middle board front/back
 		SetBitmaskFromCAN((bitmask >> 9) | ((uint32_t) 0x7fffffe0) | msb);
 	}
-	else { //left board front/back
+	else
+	{ // left board front/back
 		SetBitmaskFromCAN((bitmask >> 17) | ((uint32_t) 0x7fffffe0) | msb);
 	}
 
@@ -97,37 +116,54 @@ void CAN_process_data(uint8_t *data) {
 	XMC_CCU4_SLICE_StartTimer(TIMER_LED_HW);
 }
 
-/***************************************************************************************************************/
-
+/*****************************************************************************
+ * Initialize all CAN Logical Message Objects (LMOs)
+ * and enable the related interrupts
+ *****************************************************************************/
 void CAN_Initialize() {
 	uint32_t num = board_id % 8;
 	uint32_t layer = board_id / 8;
 	if (num <= 2) {
-		XMC_CAN_MO_SetIdentifier(&CAN_NODE_RECEIVE_LMO_NAME, (uint32_t)(LED_LAYER_1_FRONT + (layer * 4) + 0));
+		XMC_CAN_MO_SetIdentifier(&CAN_NODE_RECEIVE_LMO_NAME,
+				(uint32_t)(LED_LAYER_1_FRONT + (layer * 4) + 0));
 	}
 	else if (num == 3) {
-		XMC_CAN_MO_SetIdentifier(&CAN_NODE_RECEIVE_LMO_NAME, (uint32_t)(LED_LAYER_1_FRONT + (layer * 4) + 1));
+		XMC_CAN_MO_SetIdentifier(&CAN_NODE_RECEIVE_LMO_NAME,
+				(uint32_t)(LED_LAYER_1_FRONT + (layer * 4) + 1));
 	}
 	else if (num <= 6) {
-		XMC_CAN_MO_SetIdentifier(&CAN_NODE_RECEIVE_LMO_NAME, (uint32_t)(LED_LAYER_1_FRONT + (layer * 4) + 2));
+		XMC_CAN_MO_SetIdentifier(&CAN_NODE_RECEIVE_LMO_NAME,
+				(uint32_t)(LED_LAYER_1_FRONT + (layer * 4) + 2));
 	}
 	else {
-		XMC_CAN_MO_SetIdentifier(&CAN_NODE_RECEIVE_LMO_NAME, (uint32_t)(LED_LAYER_1_FRONT + (layer * 4) + 3));
+		XMC_CAN_MO_SetIdentifier(&CAN_NODE_RECEIVE_LMO_NAME,
+				(uint32_t)(LED_LAYER_1_FRONT + (layer * 4) + 3));
 	}
 	
-	XMC_CAN_MO_SetIdentifier(&CAN_NODE_RECEIVE_ALL_LMO_NAME, (uint32_t)(LED_ALL));
+	XMC_CAN_MO_SetIdentifier(&CAN_NODE_RECEIVE_ALL_LMO_NAME,
+			(uint32_t)(LED_ALL));
 
+	// Toggle CAN RX LED to indicate that a message has been received
 	#if (CAN_TRANSCEIVER_STB_PIN_ENABLE)
-		XMC_GPIO_SetOutputLow(CAN_STB_PIN_PORT_NAME, CAN_STB_PIN_PIN_NAME);	// Toggle CAN RX LED to indicate that a message has been received
+		XMC_GPIO_SetOutputLow(CAN_STB_PIN_PORT_NAME, CAN_STB_PIN_PIN_NAME);
 	#endif
 
-	NVIC_EnableIRQ(TIMER_LED_PERIOD_MATCH_EVENT_IRQN);			/* Enable CCU4 timer period match interrupt */
+	// Enable CCU4 timer period match interrupt
+	NVIC_EnableIRQ(TIMER_LED_PERIOD_MATCH_EVENT_IRQN);
 	NVIC_EnableIRQ(CHASER_TIMER_PERIOD_MATCH_EVENT_IRQN);
-	NVIC_EnableIRQ(CAN_IRQ_RX_NUMBER);							// Enable NVIC IRQ with correct IRQ number - see Reference Manual
+	// Enable NVIC IRQ with correct IRQ number - see Reference Manual
+	NVIC_EnableIRQ(CAN_IRQ_RX_NUMBER);
 	NVIC_EnableIRQ(CAN_IRQ_RX_ALL_NUMBER);
 
-	/* Change Interrupt event source of channel 16 (LED Timer) & channel 3 (CAN) ... see XMC1400 Reference Manual Table 5-1 */
-	WR_REG(SCU_GENERAL->INTCR0, SCU_GENERAL_INTCR0_INTSEL3_Msk, SCU_GENERAL_INTCR0_INTSEL3_Pos,   0x02);    	// CAN RX message to board ID
-	WR_REG(SCU_GENERAL->INTCR0, SCU_GENERAL_INTCR0_INTSEL4_Msk, SCU_GENERAL_INTCR0_INTSEL4_Pos,   0x02);		// CAN RX message to all boards
-	WR_REG(SCU_GENERAL->INTCR1, SCU_GENERAL_INTCR1_INTSEL16_Msk, SCU_GENERAL_INTCR1_INTSEL16_Pos, 0x02);    	// CAN TimeOut Timer
+	/* Change Interrupt event source of channel 16 (LED Timer) &
+	 * channel 3 (CAN) ... see XMC1400 Reference Manual Table 5-1 */
+	// CAN RX message to board ID
+	WR_REG(SCU_GENERAL->INTCR0, SCU_GENERAL_INTCR0_INTSEL3_Msk,
+			SCU_GENERAL_INTCR0_INTSEL3_Pos,   0x02);
+	// CAN RX message to all boards
+	WR_REG(SCU_GENERAL->INTCR0, SCU_GENERAL_INTCR0_INTSEL4_Msk,
+			SCU_GENERAL_INTCR0_INTSEL4_Pos,   0x02);
+	// CAN TimeOut Timer
+	WR_REG(SCU_GENERAL->INTCR1, SCU_GENERAL_INTCR1_INTSEL16_Msk,
+			SCU_GENERAL_INTCR1_INTSEL16_Pos, 0x02);
 }

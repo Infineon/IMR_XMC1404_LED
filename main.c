@@ -34,10 +34,12 @@
 #include "cy_utils.h"
 
 #include "IMR_CAN.h"
-#include "LED_Control.h"
 #include <stdint.h>
+#include "Libraries/Smart_LED/LED_Control.h"
 
-#define DEBUG_MODE			(0U)			// Debug Mode to initially start LEDs (Used for testing Boards & LEDs); 		0U ... Debug Mode OFF; 		1U ... Debug Mode ON;
+// Debug Mode to initially start LEDs (Used for testing Boards & LEDs);
+// 0U ... Debug Mode OFF; 		1U ... Debug Mode ON;
+#define DEBUG_MODE			(0U)
 uint32_t board_id = 0;
 uint32_t chaser_start = 0;
 
@@ -48,12 +50,13 @@ void TIMER_LED_PERIOD_MATCH_EVENT_HANDLER(void) {
 		case LED_MODE_OFF:
 		{
 			OffLight();
-			XMC_CCU4_SLICE_StopTimer(TIMER_LED_HW);		// Stop the CCU4 timer
+			XMC_CCU4_SLICE_StopTimer(TIMER_LED_HW); // Stop the CCU4 timer
 			break;
 		}
 		case LED_MODE_CHASER:
 		{
-			if (TimeStampLED >= chaser_start && TimeStampLED < chaser_start + LED_Count + 4) {
+			if (TimeStampLED >= chaser_start &&
+					TimeStampLED < chaser_start + LED_Count + 4) {
 				//do chaser step
 				uint32_t cur = TimeStampLED - chaser_start;
 
@@ -125,7 +128,8 @@ void TIMER_LED_PERIOD_MATCH_EVENT_HANDLER(void) {
 		board_id |= (uint8_t) (!XMC_GPIO_GetInput(CAN_ID4_PORT, CAN_ID4_PIN) << 3);
 		board_id |= (uint8_t) (!XMC_GPIO_GetInput(CAN_ID5_PORT, CAN_ID5_PIN) << 4);
 
-	if ((board_id % 8 == 0 || board_id % 8 == 4) && XMC_GPIO_GetInput(CAN_ID6_PORT, CAN_ID6_PIN)) {
+	if ((board_id % 8 == 0 || board_id % 8 == 4) &&
+			XMC_GPIO_GetInput(CAN_ID6_PORT, CAN_ID6_PIN)) {
 		chaser_start = 1;
 	}
 	else if (board_id % 8 == 1 || board_id % 8 == 5) {
@@ -137,7 +141,8 @@ void TIMER_LED_PERIOD_MATCH_EVENT_HANDLER(void) {
 
 	CAN_Initialize();
 
-	if (!XMC_GPIO_GetInput(CAN_ID6_PORT, CAN_ID6_PIN))		// Check Bit 6 of DIP Switch
+	// Check Bit 6 of DIP Switch
+	if (!XMC_GPIO_GetInput(CAN_ID6_PORT, CAN_ID6_PIN))
 		LED_Count = 23;		// CAN ID Position 6 ON ... 23 LEDs
 	else if (XMC_GPIO_GetInput(CAN_ID6_PORT, CAN_ID6_PIN))
 		LED_Count = 5;		// CAN ID Position 6 OFF ... 5 LEDs

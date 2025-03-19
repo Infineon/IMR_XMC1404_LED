@@ -36,10 +36,11 @@
 #include "stdint.h"
 
 typedef struct IMR_CAN_MESSAGE_STRUCT {
-	uint32_t CAN_ID;			// Stores CAN ID for message identification
-	uint8_t CAN_DATA[8];			// Stores the CAN data associated with the corresponding CAN COMMAND
+	// Stores CAN ID for message identification
+	uint32_t CAN_ID;
+	// Stores the CAN data associated with the corresponding CAN COMMAND
+	uint8_t CAN_DATA[8];
 } IMR_CAN_MESSAGE_STRUCT_t;
-
 
 typedef enum IMR_CAN_MESSAGE_IDS {
     EMERGENCY_STOP = 0x80,
@@ -84,6 +85,9 @@ typedef enum IMR_CAN_MESSAGE_IDS {
     MOT_BL_ENCODER_DATA = 0x402,
     MOT_BR_ENCODER_DATA = 0x403,
 
+	BAR_GRAPH_BACK = 0x406,
+	BAR_GRAPH = 0x407,
+
     ROBOT_VELOCITY_COMMAND = 0x41C,
     ROBOT_ODOMETRY_ESTIMATE = 0x440,
 
@@ -104,7 +108,7 @@ typedef enum IMR_CAN_MESSAGE_IDS {
 	LED_LAYER_3_BACK = 0x48A,
 	LED_LAYER_3_RIGHT = 0x48B,
 
-	LED_ALL = 0x48F,
+    LED_ALL = 0x48F,
 
     CALIBRATION_REQUEST_ALL_MOTORS = 0x540,
     CALIBRATION_REQUEST_IMU = 0x541
@@ -118,15 +122,17 @@ typedef enum CAN_STATUS_t {
     CAN_DISABLED
 } CAN_STATUS_t;
 
+// Sending LED Effects to SENSOR_LED
 typedef enum IMR_CAN_SENSOR_LED_COMMANDS {
-    LED_MODE_OFF	= 	0x4A,		// Sending LED Effects to SENSOR_LED
+    LED_MODE_OFF	= 	0x4A,
     LED_MODE_CHASER	= 	0x4B,
     LED_MODE_PULSE  = 	0x4C,
     LED_MODE_STEADY	= 	0x4F
 } IMR_CAN_SENSOR_LED_COMMANDS_t;
 
-/***************************************************************************************************************/
+/*****************************************************************************/
 
-CAN_STATUS_t CAN_TX_Request(uint32_t CAN_ID, uint8_t* Target_Data, uint8_t Target_Data_Length);
+CAN_STATUS_t CAN_TX_Request(uint32_t CAN_ID, uint8_t* Target_Data,
+		uint8_t Target_Data_Length);
 
 #endif /* IMR_CAN_GLOBAL_H_ */
