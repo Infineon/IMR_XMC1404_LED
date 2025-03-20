@@ -18,7 +18,7 @@ SPDX-License-Identifier: MIT
 
 ### Features
 
-- 5 V 32-bit microcontroller Arm® Cortex®-M0 XMC1404 48 MHz core frequency and 96 MHz peripheral clock with 200 kB Flash and 16 kB RAM
+- 32-bit microcontroller Arm® Cortex®-M0 XMC1404 48 MHz core frequency and 96 MHz peripheral clock with 200 kB Flash and 16 kB RAM
 - CAN bus communication with onboard CAN transceiver
 - Onboard DIP switch for unique board identification
 - Up to 23 RGB LEDs in series for various innovative LED patterns
