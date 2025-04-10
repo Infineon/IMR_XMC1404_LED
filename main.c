@@ -43,6 +43,8 @@
 uint32_t board_id = 0;
 uint32_t chaser_start = 0;
 
+uint8_t* git_commit_hash = (uint8_t*)GIT_COMMIT_HASH;
+
 /****************************************************************************/
 
 void TIMER_LED_PERIOD_MATCH_EVENT_HANDLER(void) {
@@ -148,6 +150,10 @@ void TIMER_LED_PERIOD_MATCH_EVENT_HANDLER(void) {
 		LED_Count = 5;		// CAN ID Position 6 OFF ... 5 LEDs
 
 	InitRGB(&strip, LED_RGBOUT_PORT, LED_RGBOUT_PIN, LED_Count);
+
+	// Send out commit hash of currently flashed software
+	XMC_Delay(board_id); // Space out the CAN messages form the individual LED boards
+	CAN_TX_Request(COMMIT_HASH, (uint8_t*)git_commit_hash, 7);
 
 	#if (DEBUG_MODE)
 		/* Start the CCU4 timer */

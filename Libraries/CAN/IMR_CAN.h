@@ -60,45 +60,6 @@ uint32_t XMC_CAN_MO_Busy(XMC_CAN_MO_t* mo_ptr);
 // CAN Node 0 ... CAN_NODE0		CAN Node 1 ... CAN_NODE1
 #define CAN_NODE_CONFIGURATOR_CHANNEL			CAN_NODE1
 
-/* IRQ Event Source Names for XMC1404 -
- * see XMC1400 Reference Manual Table 5-1 */
-/* CAN Interrupt Number Setting - XMC1404 = IRQ3_IRQn */
-#define CAN_IRQ_RX_NUMBER               		IRQ3_IRQn
-/* CAN Interrupt Handler Setting - XMC1404 = IRQ3_Handler */
-#define CAN_IRQ_RX_MESSAGE_HANDLER         		IRQ3_Handler
-#define CAN_IRQ_RX_ALL_NUMBER					IRQ4_IRQn
-#define CAN_IRQ_RX_ALL_MESSAGE_HANDLER			IRQ4_Handler
-
-#define CAN_NODE_GLOBAL_HW_NAME			CAT(CAN_NODE_CONFIGURATOR_NAME, _HW)
-#define CAN_NODE_RECEIVE_LMO_NAME		CAT(CAN_NODE_CONFIGURATOR_NAME, _LMO_0)
-#define CAN_NODE_TRANSMIT_LMO_NAME		CAT(CAN_NODE_CONFIGURATOR_NAME, _LMO_1)
-#define CAN_NODE_RECEIVE_ALL_LMO_NAME	CAT(CAN_NODE_CONFIGURATOR_NAME, _LMO_2)
-
-/*****************************************************************************/
-/********************* SENSOR LED BOARD - IMPORTANT NOTICE *******************/
-/*****************************************************************************/
-
-/* This library is designed to work with the IMR2 CAN identification in mind;
- * CAN node IDs are set using DIP switches according to
- * the selected board type;
- * To ensure the correct pins are used, the naming for each
- * individual CAN ID pin must follow the same naming convention:
- * CAN_ID + PinNumber: e.g. CAN_ID1, CAN_ID2, ...
- *
- * Please make sure this naming convention is followed
- * when naming the corresponding pins in the MTB Device Configurator;
- *
- * Make sure to select up to 2 message objects in the global CAN setting
- * for the selected node in the MTB Device Configurator;
- * 		Set the Logical MO - LMO_0 to be the RECEIVE channel (RX)
- * 			Activate "RX Message Object SR"
- * 			Activate "RX Event" with "Rx Event SR Line" set to NVIC SR0
- *
- * 		Set the Logical MO - LMO_1 to be the TRANSMIT channel (TX)
- * 		Make sure to deactivate the option to "Store Config in Flash"
- *
- *****************************************************************************/
-
 /*****************************************************************************/
 /***************** DO NOT CHANGE SETTINGS ABOVE THIS LINE ********************/
 /*****************************************************************************/
@@ -129,6 +90,35 @@ uint32_t XMC_CAN_MO_Busy(XMC_CAN_MO_t* mo_ptr);
 /***************** DO NOT CHANGE SETTINGS BELOW THIS LINE ********************/
 /*****************************************************************************/
 
+/*****************************************************************************/
+/********************* SENSOR LED BOARD - IMPORTANT NOTICE *******************/
+/*****************************************************************************/
+
+/* This library is designed to work with the IMR2 CAN identification in mind;
+ * CAN node IDs are set using DIP switches according to
+ * the selected board type;
+ * To ensure the correct pins are used, the naming for each
+ * individual CAN ID pin must follow the same naming convention:
+ * CAN_ID + PinNumber: e.g. CAN_ID1, CAN_ID2, ...
+ *
+ * Please make sure this naming convention is followed
+ * when naming the corresponding pins in the MTB Device Configurator;
+ *
+ * Make sure to select up to 2 message objects in the global CAN setting
+ * for the selected node in the MTB Device Configurator;
+ * 		Set the Logical MO - LMO_0 to be the RECEIVE channel (RX)
+ * 			Activate "RX Message Object SR"
+ * 			Activate "RX Event" with "Rx Event SR Line" set to NVIC SR0
+ *
+ * 		Set the Logical MO - LMO_1 to be the TRANSMIT channel (TX)
+ * 		Make sure to deactivate the option to "Store Config in Flash"
+ *
+ *****************************************************************************/
+
+#define CAN_NODE_RECEIVE_LMO_NAME		CAT(CAN_NODE_CONFIGURATOR_NAME, _LMO_0)
+#define CAN_NODE_TRANSMIT_LMO_NAME		CAT(CAN_NODE_CONFIGURATOR_NAME, _LMO_1)
+#define CAN_NODE_RECEIVE_ALL_LMO_NAME	CAT(CAN_NODE_CONFIGURATOR_NAME, _LMO_2)
+
 #if (CAN_NODE_RECEIVE_LED_ENABLE)
 #define CAN_RX_LED_PIN_PORT_NAME	CAT(CAN_RX_LED_PIN_CONFIGURATOR_NAME, _PORT)
 #define CAN_RX_LED_PIN_PIN_NAME		CAT(CAN_RX_LED_PIN_CONFIGURATOR_NAME, _PIN)
@@ -138,6 +128,15 @@ uint32_t XMC_CAN_MO_Busy(XMC_CAN_MO_t* mo_ptr);
 #define CAN_STB_PIN_PORT_NAME		CAT(CAN_STB_PIN_CONFIGURATOR_NAME, _PORT)
 #define CAN_STB_PIN_PIN_NAME		CAT(CAN_STB_PIN_CONFIGURATOR_NAME, _PIN)
 #endif
+
+/* IRQ Event Source Names for XMC1404 -
+ * see XMC1400 Reference Manual Table 5-1 */
+/* CAN Interrupt Number Setting - XMC1404 = IRQ3_IRQn */
+#define CAN_IRQ_RX_NUMBER               		IRQ3_IRQn
+/* CAN Interrupt Handler Setting - XMC1404 = IRQ3_Handler */
+#define CAN_IRQ_RX_MESSAGE_HANDLER         		IRQ3_Handler
+#define CAN_IRQ_RX_ALL_NUMBER					IRQ4_IRQn
+#define CAN_IRQ_RX_ALL_MESSAGE_HANDLER			IRQ4_Handler
 
 /* Interrupt event source names - see XMC1400 Reference Manual Table 5-1 */
 /* Defines IRQ number of the period match event interrupt */

@@ -89,20 +89,20 @@ void CAN_process_data(uint8_t *data) {
 	// Calculate bitmask depending on board
 	if ((board_id % 8 == 0 || board_id % 8 == 4) &&
 			XMC_GPIO_GetInput(CAN_ID6_PORT, CAN_ID6_PIN))
-	{ // short board
+	{ // long board
 		SetBitmaskFromCAN((bitmask >> 1) | ((uint32_t) 0x7fffffe0) | msb);
 	}
 	else if (board_id % 8 == 0 || board_id % 8 == 4 ||
 			board_id % 8 == 3 || board_id % 8 == 7)
-	{
+	{ // short board
 		SetBitmaskFromCAN(bitmask | msb);
 	}
 	else if (board_id % 8 == 1 || board_id % 8 == 5)
-	{ // middle board front/back
+	{ // middle short board front/back
 		SetBitmaskFromCAN((bitmask >> 9) | ((uint32_t) 0x7fffffe0) | msb);
 	}
 	else
-	{ // left board front/back
+	{ // left board front/back (board_id % 8 == 2 || board_id % 8 == 6)
 		SetBitmaskFromCAN((bitmask >> 17) | ((uint32_t) 0x7fffffe0) | msb);
 	}
 
